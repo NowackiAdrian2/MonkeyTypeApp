@@ -69,6 +69,7 @@ public class MonkeytypeApp extends Application {
         textArea.setMouseTransparent(true);
 
 
+
         // Choice box for language
         ChoiceBox<String> languageChoiceBox = new ChoiceBox<>();
         // Access the directory and retrieve the text file names
@@ -83,13 +84,25 @@ public class MonkeytypeApp extends Application {
                 }
             }
         }
+
+        // text box
+        VBox textAreaContainer = new VBox();
+        textAreaContainer.setAlignment(Pos.CENTER);
+        textAreaContainer.setStyle("-fx-background-color: white;");
+        textAreaContainer.setMouseTransparent(true);
+        textAreaContainer.setFocusTraversable(true);
+        ScrollPane scrollPaneVBOX = new ScrollPane(textAreaContainer);
+        scrollPaneVBOX.setFitToWidth(true);
+        scrollPaneVBOX.setFitToHeight(true);
+
+
+
         // Create an instance of the Controller class
-        Controller controller = new Controller(languageChoiceBox, textArea);
+        Controller controller = new Controller(languageChoiceBox, textAreaContainer);
         // Add a listener to the languageChoiceBox to trigger the text display
         languageChoiceBox.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> controller.displaySelectedTextFromFile());
         languageChoiceBox.setValue("english");
-
         // Create the scroll panes
         ScrollPane timeScrollPane = new ScrollPane();
         ScrollPane languageScrollPane = new ScrollPane();
@@ -119,10 +132,7 @@ public class MonkeytypeApp extends Application {
         // Play the animation
         fadeTransition.play();
 
-        // text box
-        VBox textAreaContainer = new VBox();
-        textAreaContainer.getChildren().add(textArea);
-        textAreaContainer.setAlignment(Pos.CENTER);
+
 
         countdownLabel = new Label();
 
@@ -134,16 +144,18 @@ public class MonkeytypeApp extends Application {
         // Create the border pane
         BorderPane borderPane = new BorderPane();
         borderPane.setTop(topHBox);
-        borderPane.setCenter(textAreaContainer);
+        borderPane.setCenter(scrollPaneVBOX);
         borderPane.setBottom(footerVBox);
 
         // Create the scene
         Scene scene = new Scene(borderPane, 700, 500);
+        scene.setOnKeyPressed(controller::handleKeyPress);
 
         // Set the scene
         primaryStage.setScene(scene);
         primaryStage.show();
-//        controller.startTypingPractice();
+
+
     }
 
     private void startCountdown(int seconds) {
