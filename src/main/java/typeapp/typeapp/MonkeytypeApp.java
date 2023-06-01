@@ -124,8 +124,11 @@ public class MonkeytypeApp extends Application {
         textAreaContainer.getChildren().add(textArea);
         textAreaContainer.setAlignment(Pos.CENTER);
 
-        // Create the top area with choice boxes
-        HBox topHBox = new HBox(10, languageChoiceBox, timeChoiceBox);
+        countdownLabel = new Label();
+
+
+        // Create the top area with choice boxes and countdown label
+        HBox topHBox = new HBox(10, languageChoiceBox, timeChoiceBox, countdownLabel, startButton);
         topHBox.setAlignment(Pos.CENTER);
 
         // Create the border pane
