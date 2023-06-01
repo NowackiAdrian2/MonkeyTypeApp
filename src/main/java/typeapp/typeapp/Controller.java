@@ -92,7 +92,7 @@ public class Controller {
             setTextFlowToString();
             // Set the content as text in the TextArea
             textArea.clear();
-            textArea.setText(content);
+            textArea.setText("wielki dydol");
 
         } catch (IOException e) {
             e.printStackTrace();

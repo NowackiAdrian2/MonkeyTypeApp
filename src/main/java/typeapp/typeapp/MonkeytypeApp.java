@@ -29,7 +29,7 @@ public class MonkeytypeApp extends Application {
         // Create the start button
         Button startButton = new Button("Start");
         startButton.setStyle("-fx-border-color: red; -fx-border-width: 1px; -fx-border-radius: 5px;");
-//        startButton.setBackground(Background.EMPTY);
+        startButton.setBackground(Background.EMPTY);
 
         // Create the text area
         TextArea textArea = new TextArea();
