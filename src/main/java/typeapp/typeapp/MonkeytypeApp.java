@@ -6,10 +6,7 @@ import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.StackPane;
-import javafx.scene.layout.VBox;
+import javafx.scene.layout.*;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 
@@ -28,6 +25,11 @@ public class MonkeytypeApp extends Application {
         ChoiceBox<Integer> timeChoiceBox = new ChoiceBox<>();
         timeChoiceBox.getItems().addAll(15, 20, 45, 60, 90, 120, 300);
         timeChoiceBox.setValue(60);
+
+        // Create the start button
+        Button startButton = new Button("Start");
+        startButton.setStyle("-fx-border-color: red; -fx-border-width: 1px; -fx-border-radius: 5px;");
+        startButton.setBackground(Background.EMPTY);
 
         // Create the text area
         TextArea textArea = new TextArea();
@@ -99,7 +101,7 @@ public class MonkeytypeApp extends Application {
         // Set the scene
         primaryStage.setScene(scene);
         primaryStage.show();
-        controller.startTypingPractice();
+ //       controller.startTypingPractice();
     }
 
     private Label createButtonLabel(String labelText) {

@@ -108,7 +108,7 @@ public void setTextFlowToString() {
     }
     this.content = stringBuilder.toString();}
 
-    private void handleKeyPress(KeyEvent event) {
+/*    private void handleKeyPress(KeyEvent event) {
             KeyCode keyCode = event.getCode();
 
             if (currentIndex > 0) {
@@ -138,7 +138,7 @@ public void setTextFlowToString() {
                     }
                 }
             }
-        }
+        }*/
 
     }
 
@@ -189,4 +189,3 @@ public void setTextFlowToString() {
         // Logic to end the game
         System.out.println("Ending the game...");
     }*/
-}
