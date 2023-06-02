@@ -60,15 +60,6 @@ public class MonkeytypeApp extends Application {
             startCountdown(selectedTime);
         });
 
-        // Create the text area
-        TextArea textArea = new TextArea();
-        textArea.setFont(Font.font("Arial", 14));
-        textArea.setWrapText(true);
-        textArea.positionCaret(0);
-        textArea.requestFocus( );
-        textArea.setMouseTransparent(true);
-
-
 
         // Choice box for language
         ChoiceBox<String> languageChoiceBox = new ChoiceBox<>();
