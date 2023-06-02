@@ -77,55 +77,55 @@ public class Controller {
 
 
 
-public void handleKeyPress(KeyEvent event) {
-            KeyCode keyCode = event.getCode();
-    System.out.println("current key: " + keyCode);
+    public void handleKeyPress(KeyEvent event) {
+        KeyCode keyCode = event.getCode();
+        System.out.println("current key: " + keyCode);
 
 
-    System.out.println("current index " + currentIndex);
-            //event casting to String
-            String  inputCharToString = String.valueOf(keyCode).toLowerCase();
+        System.out.println("current index " + currentIndex);
+        //event casting to String
+        String  inputCharToString = String.valueOf(keyCode).toLowerCase();
 
-            //node from text flow casting to String
-            Node node = textFlow.getChildren().get(currentIndex);
-            Text textNode = (Text) node;
-            String character = textNode.getText();
+        //node from text flow casting to String
+        Node node = textFlow.getChildren().get(currentIndex);
+        Text textNode = (Text) node;
+        String character = textNode.getText();
 
 
-            //node from text flow casting to String
-            Node nodeOfNextCharacter = textFlow.getChildren().get(currentIndex+1);
-            Text textNodeOfNextCharactere = (Text) nodeOfNextCharacter;
-            String characterNodeOfNextCharactere  = textNodeOfNextCharactere.getText();
+        //node from text flow casting to String
+        Node nodeOfNextCharacter = textFlow.getChildren().get(currentIndex+1);
+        Text textNodeOfNextCharactere = (Text) nodeOfNextCharacter;
+        String characterNodeOfNextCharactere  = textNodeOfNextCharactere.getText();
 
-            System.out.println("our string in the textFlow is " + character + " and our placed event string is " + inputCharToString);
+        System.out.println("our string in the textFlow is " + character + " and our placed event string is " + inputCharToString);
 
-            if (inputCharToString.equals(character)){
-                textNode.setFill(Color.BLUE);
+        if (inputCharToString.equals(character)){
+            textNode.setFill(Color.BLUE);
 
-            } else if (!(inputCharToString.equals(character)&& !inputCharToString.equals(characterNodeOfNextCharactere))) {
-                textNode.setFill(Color.RED);
+        } else if (!(inputCharToString.equals(character)&& !inputCharToString.equals(characterNodeOfNextCharactere))) {
+            textNode.setFill(Color.RED);
 
-            } else if (inputCharToString.equals(" ")) {
-               Text textAdditinalChar = new Text(inputCharToString);
-               textAdditinalChar.setFill(Color.ORANGE);
+        } else if (inputCharToString.equals(" ")) {
+            Text textAdditinalChar = new Text(inputCharToString);
+            textAdditinalChar.setFill(Color.ORANGE);
 
-            } else if (!inputCharToString.equals(character) && inputCharToString.equals(characterNodeOfNextCharactere)) {
-                textNode.setFill(Color.BLACK);
-                textNodeOfNextCharactere.setFill(Color.BLUE);
+        } else if (!inputCharToString.equals(character) && inputCharToString.equals(characterNodeOfNextCharactere)) {
+            textNode.setFill(Color.BLACK);
+            textNodeOfNextCharactere.setFill(Color.BLUE);
 //
-            }else {
-                textNode.setFill(Color.GRAY);
-            }
-            vBox.getChildren().clear();
-            vBox.getChildren().add(textFlow);
+        }else {
+            textNode.setFill(Color.GRAY);
+        }
+        vBox.getChildren().clear();
+        vBox.getChildren().add(textFlow);
 
-    if (keyCode == KeyCode.BACK_SPACE && currentIndex> 0) {
-        currentIndex--;
-    } else if (keyCode.isLetterKey()) {
-        currentIndex++;
-    }else {
-        currentIndex = 0;
-    }
+        if (keyCode == KeyCode.BACK_SPACE && currentIndex> 0) {
+            currentIndex--;
+        } else if (keyCode.isLetterKey()) {
+            currentIndex++;
+        }else {
+            currentIndex = 0;
+        }
 
 
     }
