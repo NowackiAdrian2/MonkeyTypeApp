@@ -80,13 +80,11 @@ public class MonkeytypeApp extends Application {
         VBox textAreaContainer = new VBox();
         textAreaContainer.setAlignment(Pos.CENTER);
         textAreaContainer.setStyle("-fx-background-color: white;");
-        textAreaContainer.setMouseTransparent(true);
+        textAreaContainer.setMouseTransparent(false);
         textAreaContainer.setFocusTraversable(true);
         ScrollPane scrollPaneVBOX = new ScrollPane(textAreaContainer);
         scrollPaneVBOX.setFitToWidth(true);
         scrollPaneVBOX.setFitToHeight(true);
-
-
 
         // Create an instance of the Controller class
         Controller controller = new Controller(languageChoiceBox, textAreaContainer);

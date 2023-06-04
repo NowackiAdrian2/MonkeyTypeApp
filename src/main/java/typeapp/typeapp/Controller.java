@@ -8,6 +8,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.Node;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextArea;
+import javafx.scene.control.TextField;
+import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
@@ -31,12 +33,18 @@ public class Controller {
     private Random random;
     private TextFlow textFlow;
     int currentIndex;
+    int endOfTheWord;
+    int begginningOfNextWord;
+    private TextField textField;
+    private Text caret = new Text("|");
 
     public Controller(ChoiceBox<String> languageChoiceBox, VBox vBox) {
         this.languageChoiceBox = languageChoiceBox;
         this.textFlow = new TextFlow();
         this.random = new Random();
         this.vBox = vBox;
+        this.textField = new TextField();
+
     }
 
 
@@ -72,164 +80,68 @@ public class Controller {
 
         } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-
+        }}
 
     public void handleKeyPress(KeyEvent event) {
         KeyCode keyCode = event.getCode();
-        System.out.println("current key: " + keyCode);
+        System.out.println("Current index is: " + currentIndex);
 
-
-        System.out.println("current index " + currentIndex);
-        //event casting to String
-        String  inputCharToString = String.valueOf(keyCode).toLowerCase();
-
-        //node from text flow casting to String
-        Node node = textFlow.getChildren().get(currentIndex);
-        Text textNode = (Text) node;
+        Text textNode = (Text) textFlow.getChildren().get(currentIndex);
         String character = textNode.getText();
+        System.out.println("Current letter in the textFlow is: " + character);
+        Text textNodeOfNextCharacter = (Text) textFlow.getChildren().get(currentIndex + 1);
+        String nextCharacter = textNodeOfNextCharacter.getText();
 
+        String inputCharToString = event.getText();
 
-        //node from text flow casting to String
-        Node nodeOfNextCharacter = textFlow.getChildren().get(currentIndex+1);
-        Text textNodeOfNextCharactere = (Text) nodeOfNextCharacter;
-        String characterNodeOfNextCharactere  = textNodeOfNextCharactere.getText();
-
-        System.out.println("our string in the textFlow is " + character + " and our placed event string is " + inputCharToString);
-
-        if (inputCharToString.equals(character)){
-            textNode.setFill(Color.BLUE);
-
-        } else if (!(inputCharToString.equals(character)&& !inputCharToString.equals(characterNodeOfNextCharactere))) {
-            textNode.setFill(Color.RED);
-
-        } else if (inputCharToString.equals(" ")) {
-            Text textAdditinalChar = new Text(inputCharToString);
-            textAdditinalChar.setFill(Color.ORANGE);
-
-        } else if (!inputCharToString.equals(character) && inputCharToString.equals(characterNodeOfNextCharactere)) {
-            textNode.setFill(Color.BLACK);
-            textNodeOfNextCharactere.setFill(Color.BLUE);
-//
-        }else {
-            textNode.setFill(Color.GRAY);
+        if (character.equals(" ")) {
+            if (keyCode.equals(KeyCode.ENTER)) {
+                currentIndex++;
+                return;
+            } else if (keyCode.isLetterKey()) {
+                Text redundantLetter = new Text(inputCharToString);
+                redundantLetter.setFill(Color.ORANGE);
+                redundantLetter.setFont(Font.font(20));
+                textFlow.getChildren().add(currentIndex, redundantLetter);
+                currentIndex++; // Aktualizacja currentIndex
+                return;
+            }
         }
-        vBox.getChildren().clear();
-        vBox.getChildren().add(textFlow);
 
-        if (keyCode == KeyCode.BACK_SPACE && currentIndex> 0) {
-            currentIndex--;
+        if (keyCode == KeyCode.BACK_SPACE && currentIndex > 1) {
+            if (character.equals(" ")) {
+                currentIndex--;
+                return;
+            } else if (textNode.getFill().equals(Color.ORANGE)) {
+                textFlow.getChildren().remove(currentIndex);
+                currentIndex--;
+                return;
+            } else {
+                textNode.setFill(Color.GRAY);
+                currentIndex--;
+            }
         } else if (keyCode.isLetterKey()) {
             currentIndex++;
-        }else {
-            currentIndex = 0;
+        } else {
+            return;
         }
 
+        if (inputCharToString.equals(character) && !textNode.getFill().equals(Color.ORANGE)) {
+            textNode.setFill(Color.BLUE);
+        } else if (inputCharToString.equals(nextCharacter) && !textNode.getFill().equals(Color.ORANGE)) {
+            textNode.setFill(Color.BLACK);
+            textNodeOfNextCharacter.setFill(Color.BLUE);
+        } else if (keyCode.isLetterKey() && !inputCharToString.equals(character) && !textNode.getFill().equals(Color.ORANGE)) {
+            textNode.setFill(Color.RED);
+        } else {
+            return;
+        }
 
+        vBox.getChildren().clear();
+        vBox.getChildren().add(textFlow);
     }
-//}
-
-//    public void handleKeyPress(KeyEvent event) {
-//        KeyCode keyCode = event.getCode();
-//
-//        if (currentIndex > 0) {
-//            if (keyCode == KeyCode.BACK_SPACE) {
-//                currentIndex--;
-//            } else if (keyCode.isLetterKey()) {
-//                currentIndex++;
-//            } else {
-//                return;
-//            }
-//        } else {
-//            currentIndex = 0;
-//        }
-//
-//        // Get the Text node at the current index
-//        Node node = textFlow.getChildren().get(currentIndex);
-//        if (node instanceof Text) {
-//            Text textNode = (Text) node;
-//            String character = textNode.getText();
-//            String inputChar = event.getCharacter();
-//
-//            // Compare the input character with the character at the current index
-//            if (inputChar.equals(character)) {
-//                textNode.setFill(Color.GREEN);
-//            } else {
-//                textNode.setFill(Color.RED);
-//            }
-//        }
-//
-//        // Build the updated content with color highlighting using StringBuilder
-//        StringBuilder updatedContent = new StringBuilder();
-//        for (Node childNode : textFlow.getChildren()) {
-//            if (childNode instanceof Text) {
-//                Text textNode = (Text) childNode;
-//                String character = textNode.getText();
-//
-//                // Set the color based on the fill value
-//                String color = "";
-//                if (textNode.getFill() == Color.GREEN) {
-//                    color = "green";
-//                } else if (textNode.getFill() == Color.RED) {
-//                    color = "red";
-//                }
-//
-//                // Append the character with color styling
-//                updatedContent.append("<span style=\"-fx-fill:").append(color).append(";\">").append(character).append("</span>");
-//            }
-//        }
-//
-//        // Set the updated content in the TextArea
-//        textArea.clear();
-//        textArea.setText(updatedContent.toString());
-//    }
-}
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-// wroc do tego pozniej
-
-    /*    public void initialize() {
-        textArea.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent event) {
-                if (event.isControlDown() && event.isShiftDown() && event.getCode() == KeyCode.P) {
-                    // Ctrl + Shift + P - Pause the game
-                    pauseGame();
-                } else if (event.getCode() == KeyCode.ENTER) {
-                    if (event.isShortcutDown()) {
-                        // Tab + Enter - Restart the game
-                        restartGame();
-                    } else {
-                        // Handle other Enter key events
-                        // ...
-                    }
-                } else if (event.getCode() == KeyCode.ESCAPE) {
-                    // Esc - End the game
-                    endGame();
-                }
-            }
-        });
-    }
 
     private void restartGame() {
         // Logic to restart the game
@@ -244,4 +156,4 @@ public class Controller {
     private void endGame() {
         // Logic to end the game
         System.out.println("Ending the game...");
-    }*/
+    }}
