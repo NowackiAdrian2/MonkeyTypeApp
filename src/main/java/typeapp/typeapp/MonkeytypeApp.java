@@ -17,6 +17,8 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
+import java.util.Timer;
+import java.util.TimerTask;
 
 public class MonkeytypeApp extends Application {
     public static void main(String[] args) {
@@ -143,6 +145,14 @@ public class MonkeytypeApp extends Application {
         // Set the scene
         primaryStage.setScene(scene);
         primaryStage.show();
+
+        Timer timer = new Timer();
+        timer.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                controller.jumpText();
+            }
+        }, 0, 50000);
 
 
     }

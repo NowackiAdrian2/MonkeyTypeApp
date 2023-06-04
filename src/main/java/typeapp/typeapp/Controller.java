@@ -1,6 +1,7 @@
 package typeapp.typeapp;
 
 
+import javafx.animation.*;
 import javafx.application.Platform;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -18,6 +19,18 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
+import javafx.animation.KeyFrame;
+import javafx.animation.KeyValue;
+import javafx.animation.Timeline;
+import javafx.application.Application;
+import javafx.scene.Scene;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.Text;
+import javafx.scene.text.TextFlow;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
 
 import java.io.BufferedReader;
@@ -28,6 +41,8 @@ import java.net.URL;
 import java.util.*;
 
 public class Controller {
+
+    private static final double DELAY  = 0.001;
     private  VBox vBox;
     private ChoiceBox<String> languageChoiceBox;
     private Random random;
@@ -37,6 +52,9 @@ public class Controller {
     int begginningOfNextWord;
     private TextField textField;
     private Text caret = new Text("|");
+    private static final double JUMP_HEIGHT = 10;
+    private static final Duration JUMP_DURATION = Duration.millis(100);
+
 
     public Controller(ChoiceBox<String> languageChoiceBox, VBox vBox) {
         this.languageChoiceBox = languageChoiceBox;
@@ -47,6 +65,9 @@ public class Controller {
 
     }
 
+    public TextFlow getTextFlow() {
+        return textFlow;
+    }
 
     public void displaySelectedTextFromFile() {
         textFlow.getChildren().clear();
@@ -83,6 +104,7 @@ public class Controller {
         }}
 
     public void handleKeyPress(KeyEvent event) {
+
         KeyCode keyCode = event.getCode();
         System.out.println("Current index is: " + currentIndex);
 
@@ -109,6 +131,7 @@ public class Controller {
         }
 
         if (keyCode == KeyCode.BACK_SPACE && currentIndex > 1) {
+
             if (character.equals(" ")) {
                 currentIndex--;
                 return;
@@ -140,6 +163,40 @@ public class Controller {
         vBox.getChildren().clear();
         vBox.getChildren().add(textFlow);
     }
+
+    void jumpText() {
+        SequentialTransition sequentialTransition = new SequentialTransition();
+
+        for (int i = 0; i < this.textFlow.getChildren().size(); i++) {
+            Text text = (Text) this.textFlow.getChildren().get(i);
+            animateJump(text, i, sequentialTransition);
+        }
+
+        sequentialTransition.play();
+    }
+
+    private void animateJump(Text text, int index, SequentialTransition sequentialTransition) {
+        TranslateTransition jumpTransition = new TranslateTransition(JUMP_DURATION, text);
+        jumpTransition.setByY(-JUMP_HEIGHT);
+        jumpTransition.setInterpolator(Interpolator.EASE_OUT);
+
+        TranslateTransition fallTransition = new TranslateTransition(JUMP_DURATION, text);
+        fallTransition.setByY(JUMP_HEIGHT);
+        fallTransition.setInterpolator(Interpolator.EASE_IN);
+
+        TranslateTransition initialPositionTransition = new TranslateTransition(Duration.ZERO, text);
+        initialPositionTransition.setToY(0);
+
+        SequentialTransition letterTransition = new SequentialTransition(
+                new PauseTransition(Duration.seconds( DELAY)),
+                jumpTransition,
+                fallTransition
+        );
+
+        sequentialTransition.getChildren().add(letterTransition);
+    }
+
+
 
 
 
