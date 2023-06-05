@@ -2,37 +2,20 @@ package typeapp.typeapp;
 
 
 import javafx.animation.*;
-import javafx.application.Platform;
-import javafx.event.EventHandler;
-import javafx.fxml.FXML;
-import javafx.fxml.Initializable;
+import javafx.collections.ObservableList;
+import javafx.event.Event;
 import javafx.scene.Node;
 import javafx.scene.control.ChoiceBox;
-import javafx.scene.control.TextArea;
 import javafx.scene.control.TextField;
-import javafx.scene.control.TextInputControl;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
-import javafx.animation.KeyFrame;
-import javafx.animation.KeyValue;
-import javafx.animation.Timeline;
-import javafx.application.Application;
-import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
-import javafx.scene.paint.Color;
-import javafx.scene.text.Font;
-import javafx.scene.text.Text;
-import javafx.scene.text.TextFlow;
-import javafx.stage.Stage;
 import javafx.util.Duration;
-
-
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -40,37 +23,42 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.*;
 
+import static javafx.scene.input.KeyCode.getKeyCode;
+
 public class Controller {
 
     private static final double DELAY  = 0.001;
+    private  HBox hBox;
     private  VBox vBox;
     private ChoiceBox<String> languageChoiceBox;
     private Random random;
     private TextFlow textFlow;
     int currentIndex;
-    int endOfTheWord;
-    int begginningOfNextWord;
     private TextField textField;
     private Text caret = new Text("|");
     private static final double JUMP_HEIGHT = 10;
     private static final Duration JUMP_DURATION = Duration.millis(100);
+    private int totalWordsTyped = 0;
+    private long startTime = 0;
+    Text wordCountText = new Text();
+    List<String> randomWords;
+    private List<Integer> listOfLettersOfWords;
 
 
-    public Controller(ChoiceBox<String> languageChoiceBox, VBox vBox) {
+    public Controller(ChoiceBox<String> languageChoiceBox, VBox vBox, HBox hBox) {
         this.languageChoiceBox = languageChoiceBox;
         this.textFlow = new TextFlow();
         this.random = new Random();
         this.vBox = vBox;
+        this.hBox = hBox;
         this.textField = new TextField();
-
+        this.listOfLettersOfWords = new ArrayList<>();
     }
 
-    public TextFlow getTextFlow() {
-        return textFlow;
-    }
 
     public void displaySelectedTextFromFile() {
         textFlow.getChildren().clear();
+        startTime = System.currentTimeMillis();
         String selectedLanguage = languageChoiceBox.getValue();
         String fileName = selectedLanguage + ".txt";
         File selectedFile = new File("dictionary/" + fileName);
@@ -81,27 +69,35 @@ public class Controller {
             while ((line = reader.readLine()) != null) {
                 words.add(line);
             }
-
+            int nuberOfLettersInTheWord = 0;
+            int indexOfnuberOfListOfLettersInTheWord = 0;
             Collections.shuffle(words, random);
             int numWordsToShow = Math.min(words.size(), 30);
-            List<String> randomWords = words.subList(0, numWordsToShow);
-
-
+            this.randomWords = words.subList(0, numWordsToShow);
+            System.out.println("randomWords" + randomWords);
             for (String word : randomWords) {
                 for (char c : word.toCharArray()) {
                     Text textNode = new Text(String.valueOf(c));
                     textNode.setFill(Color.GRAY);
                     textNode.setFont(Font.font(20));
                     textFlow.getChildren().add(textNode);
+                    nuberOfLettersInTheWord++;
                 }
                 textFlow.getChildren().add(new Text(" ")); // Add space between words
+                this.listOfLettersOfWords.add(indexOfnuberOfListOfLettersInTheWord,nuberOfLettersInTheWord);
+                indexOfnuberOfListOfLettersInTheWord++;
+                nuberOfLettersInTheWord= 0;
             }
+            System.out.println("listOfLettersOfWords  = " + listOfLettersOfWords.toString());
 
             vBox.getChildren().add(textFlow);
+            wordCountText.setText("Words typed: " + totalWordsTyped);
+            hBox.getChildren().add(hBox.getChildren().size(), wordCountText);
 
         } catch (IOException e) {
             e.printStackTrace();
         }}
+
 
     public void handleKeyPress(KeyEvent event) {
 
@@ -131,7 +127,6 @@ public class Controller {
         }
 
         if (keyCode == KeyCode.BACK_SPACE && currentIndex > 1) {
-
             if (character.equals(" ")) {
                 currentIndex--;
                 return;
@@ -142,7 +137,8 @@ public class Controller {
             } else {
                 textNode.setFill(Color.GRAY);
                 currentIndex--;
-            }
+            };
+
         } else if (keyCode.isLetterKey()) {
             currentIndex++;
         } else {
@@ -162,7 +158,41 @@ public class Controller {
 
         vBox.getChildren().clear();
         vBox.getChildren().add(textFlow);
+        totalWordsTyped = countTypedWords();
+        wordCountText.setText("Words typed: " + totalWordsTyped);
+        hBox.getChildren().set((hBox.getChildren().size() - 1), wordCountText);
     }
+
+public int countTypedWords() {
+    int wordCount = 0;
+    int wordLengthIndex = 0;
+    int lettersCount = 0;
+
+    for (Node node : textFlow.getChildren()) {
+        if (node instanceof Text) {
+            Text textNode = (Text) node;
+            String character = textNode.getText();
+
+            if (!character.equals(" ")) {
+                if (textNode.getFill() != Color.ORANGE && textNode.getFill() != Color.GRAY) {
+                    lettersCount++;
+                    System.out.println("Letter - lettersCount is now " + lettersCount + "with wordLengthIndex = " + wordLengthIndex);
+                }
+            } else {
+                if (wordLengthIndex < listOfLettersOfWords.size()) {
+                    int wordLength = listOfLettersOfWords.get(wordLengthIndex);
+                    if (lettersCount == wordLength) {
+                        wordCount++;
+                    }
+                    wordLengthIndex++;
+                    lettersCount = 0;
+                }
+            }
+        }
+    }
+
+    return wordCount;
+}
 
     void jumpText() {
         SequentialTransition sequentialTransition = new SequentialTransition();
@@ -197,20 +227,18 @@ public class Controller {
     }
 
 
-
-
-
-    private void restartGame() {
-        // Logic to restart the game
-        System.out.println("Restarting the game...");
+    public void shortCutsHandler(KeyEvent event) {
+        KeyCode keyCode = event.getCode();
+        if (keyCode == KeyCode.TAB && keyCode == KeyCode.ENTER) {
+            restartTest();
+            }
+         if (keyCode == KeyCode.CONTROL && keyCode == KeyCode.SHIFT && keyCode == KeyCode.P) {
+                // Show PAUSE window
+            showPauseWindow();
+            }
+         if (keyCode == KeyCode.ESCAPE) {
+            // Exit the app
+            exitApp();
+        }
     }
-
-    private void pauseGame() {
-        // Logic to pause the game
-        System.out.println("Pausing the game...");
-    }
-
-    private void endGame() {
-        // Logic to end the game
-        System.out.println("Ending the game...");
-    }}
+}

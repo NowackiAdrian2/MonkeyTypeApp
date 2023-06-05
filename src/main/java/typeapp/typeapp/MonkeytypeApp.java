@@ -87,9 +87,14 @@ public class MonkeytypeApp extends Application {
         ScrollPane scrollPaneVBOX = new ScrollPane(textAreaContainer);
         scrollPaneVBOX.setFitToWidth(true);
         scrollPaneVBOX.setFitToHeight(true);
+        countdownLabel = new Label();
+
+        // Create the top area with choice boxes and countdown label
+        HBox topHBox = new HBox(10, languageChoiceBox, timeChoiceBox, countdownLabel, startButton);
+        topHBox.setAlignment(Pos.CENTER);
 
         // Create an instance of the Controller class
-        Controller controller = new Controller(languageChoiceBox, textAreaContainer);
+        Controller controller = new Controller(languageChoiceBox, textAreaContainer,topHBox);
         // Add a listener to the languageChoiceBox to trigger the text display
         languageChoiceBox.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> controller.displaySelectedTextFromFile());
@@ -124,13 +129,6 @@ public class MonkeytypeApp extends Application {
         fadeTransition.play();
 
 
-
-        countdownLabel = new Label();
-
-
-        // Create the top area with choice boxes and countdown label
-        HBox topHBox = new HBox(10, languageChoiceBox, timeChoiceBox, countdownLabel, startButton);
-        topHBox.setAlignment(Pos.CENTER);
 
         // Create the border pane
         BorderPane borderPane = new BorderPane();
