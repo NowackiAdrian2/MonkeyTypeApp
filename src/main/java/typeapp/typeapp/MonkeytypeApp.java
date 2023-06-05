@@ -12,6 +12,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
@@ -128,8 +129,6 @@ public class MonkeytypeApp extends Application {
         // Play the animation
         fadeTransition.play();
 
-
-
         // Create the border pane
         BorderPane borderPane = new BorderPane();
         borderPane.setTop(topHBox);
@@ -139,6 +138,10 @@ public class MonkeytypeApp extends Application {
         // Create the scene
         Scene scene = new Scene(borderPane, 700, 500);
         scene.setOnKeyPressed(controller::handleKeyPress);
+        Rectangle overlay = new Rectangle(scene.getWidth(), scene.getHeight(), Color.rgb(0, 0, 0, 0.5));
+        scene.setOnKeyPressed(controller::shortCutsHandler);
+
+
 
         // Set the scene
         primaryStage.setScene(scene);
@@ -151,8 +154,6 @@ public class MonkeytypeApp extends Application {
                 controller.jumpText();
             }
         }, 0, 50000);
-
-
     }
 
     private void startCountdown(int seconds) {

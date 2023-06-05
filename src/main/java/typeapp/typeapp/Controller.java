@@ -12,6 +12,7 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -227,18 +228,22 @@ public int countTypedWords() {
     }
 
 
-    public void shortCutsHandler(KeyEvent event) {
+    public void shortCutsHandler(KeyEvent event,Rectangle overlay) {
         KeyCode keyCode = event.getCode();
         if (keyCode == KeyCode.TAB && keyCode == KeyCode.ENTER) {
-            restartTest();
+//            restartTest();
             }
          if (keyCode == KeyCode.CONTROL && keyCode == KeyCode.SHIFT && keyCode == KeyCode.P) {
                 // Show PAUSE window
-            showPauseWindow();
+             overlay.setVisible(true);
+             System.out.println("Pausing application");
+//            showPauseWindow();
             }
          if (keyCode == KeyCode.ESCAPE) {
             // Exit the app
-            exitApp();
+             System.out.println("Exiting application");
+             System.exit(0);
+//            exitApp();
         }
     }
 }
