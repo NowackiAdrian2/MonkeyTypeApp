@@ -39,14 +39,15 @@ public class Controller {
     private Text caret = new Text("|");
     private static final double JUMP_HEIGHT = 10;
     private static final Duration JUMP_DURATION = Duration.millis(100);
-    private int totalWordsTyped = 0;
-    private long startTime = 0;
+    private double wordsPerMinuteCurrent = 0;
+    private Duration elapsedTime;
     Text wordCountText = new Text();
     List<String> randomWords;
     private List<Integer> listOfLettersOfWords;
 
 
-    public Controller(ChoiceBox<String> languageChoiceBox, VBox vBox, HBox hBox) {
+
+    public Controller(ChoiceBox<String> languageChoiceBox, VBox vBox, HBox hBox,) {
         this.languageChoiceBox = languageChoiceBox;
         this.textFlow = new TextFlow();
         this.random = new Random();
@@ -54,12 +55,13 @@ public class Controller {
         this.hBox = hBox;
         this.textField = new TextField();
         this.listOfLettersOfWords = new ArrayList<>();
+
     }
 
 
     public void displaySelectedTextFromFile() {
         textFlow.getChildren().clear();
-        startTime = System.currentTimeMillis();
+
         String selectedLanguage = languageChoiceBox.getValue();
         String fileName = selectedLanguage + ".txt";
         File selectedFile = new File("dictionary/" + fileName);
@@ -92,7 +94,7 @@ public class Controller {
             System.out.println("listOfLettersOfWords  = " + listOfLettersOfWords.toString());
 
             vBox.getChildren().add(textFlow);
-            wordCountText.setText("Words typed: " + totalWordsTyped);
+            wordCountText.setText("Words typed: " + wordsPerMinuteCurrent);
             hBox.getChildren().add(hBox.getChildren().size(), wordCountText);
 
         } catch (IOException e) {
@@ -159,8 +161,9 @@ public class Controller {
 
         vBox.getChildren().clear();
         vBox.getChildren().add(textFlow);
-        totalWordsTyped = countTypedWords();
-        wordCountText.setText("Words typed: " + totalWordsTyped);
+        if (countTypedWords()>0)
+        wordsPerMinuteCurrent = countTypedWords()*60/;
+        wordCountText.setText("Words typed: " + wordsPerMinuteCurrent);
         hBox.getChildren().set((hBox.getChildren().size() - 1), wordCountText);
     }
 

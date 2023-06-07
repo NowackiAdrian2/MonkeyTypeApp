@@ -22,6 +22,8 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MonkeytypeApp extends Application {
+    private int elpasedTime;
+
     public static void main(String[] args) {
         launch(args);
     }
@@ -95,7 +97,7 @@ public class MonkeytypeApp extends Application {
         topHBox.setAlignment(Pos.CENTER);
 
         // Create an instance of the Controller class
-        Controller controller = new Controller(languageChoiceBox, textAreaContainer,topHBox);
+        Controller controller = new Controller(languageChoiceBox, textAreaContainer,topHBox,elpasedTime);
         // Add a listener to the languageChoiceBox to trigger the text display
         languageChoiceBox.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> controller.displaySelectedTextFromFile());
@@ -139,9 +141,7 @@ public class MonkeytypeApp extends Application {
         Scene scene = new Scene(borderPane, 700, 500);
         scene.setOnKeyPressed(controller::handleKeyPress);
         Rectangle overlay = new Rectangle(scene.getWidth(), scene.getHeight(), Color.rgb(0, 0, 0, 0.5));
-        scene.setOnKeyPressed(controller::shortCutsHandler);
-
-
+//        scene.setOnKeyPressed(controller::shortCutsHandler);
 
         // Set the scene
         primaryStage.setScene(scene);
@@ -165,13 +165,15 @@ public class MonkeytypeApp extends Application {
         KeyFrame keyFrame = new KeyFrame(Duration.seconds(1), event -> {
             remainingSeconds[0]--;
             countdownLabel.setText(Integer.toString(remainingSeconds[0]));
+            this.elpasedTime = seconds - remainingSeconds[0];
             if (remainingSeconds[0] <= 0) {
                 timeline.stop();
-                // Countdown finished, add any additional logic here
+                // Countdown finished,TU TRZEBA WYSWIETLC WYKRES
             }
         });
         timeline.getKeyFrames().add(keyFrame);
         timeline.play();
+
     }
 
     private Label createButtonLabel(String labelText) {
