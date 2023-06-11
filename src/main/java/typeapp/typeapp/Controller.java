@@ -22,6 +22,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
+import java.text.DecimalFormat;
 import java.util.*;
 
 import static javafx.scene.input.KeyCode.getKeyCode;
@@ -29,6 +30,7 @@ import static javafx.scene.input.KeyCode.getKeyCode;
 public class Controller {
 
     private static final double DELAY  = 0.001;
+    private final double appStart;
     private  HBox hBox;
     private  VBox vBox;
     private ChoiceBox<String> languageChoiceBox;
@@ -39,15 +41,15 @@ public class Controller {
     private Text caret = new Text("|");
     private static final double JUMP_HEIGHT = 10;
     private static final Duration JUMP_DURATION = Duration.millis(100);
-    private double wordsPerMinuteCurrent = 0;
-    private Duration elapsedTime;
+    private String wordsPerMinuteCurrent;
+
     Text wordCountText = new Text();
     List<String> randomWords;
     private List<Integer> listOfLettersOfWords;
 
 
 
-    public Controller(ChoiceBox<String> languageChoiceBox, VBox vBox, HBox hBox,) {
+    public Controller(ChoiceBox<String> languageChoiceBox, VBox vBox, HBox hBox) {
         this.languageChoiceBox = languageChoiceBox;
         this.textFlow = new TextFlow();
         this.random = new Random();
@@ -55,6 +57,7 @@ public class Controller {
         this.hBox = hBox;
         this.textField = new TextField();
         this.listOfLettersOfWords = new ArrayList<>();
+        this.appStart = System.currentTimeMillis();
 
     }
 
@@ -91,7 +94,7 @@ public class Controller {
                 indexOfnuberOfListOfLettersInTheWord++;
                 nuberOfLettersInTheWord= 0;
             }
-            System.out.println("listOfLettersOfWords  = " + listOfLettersOfWords.toString());
+
 
             vBox.getChildren().add(textFlow);
             wordCountText.setText("Words typed: " + wordsPerMinuteCurrent);
@@ -105,11 +108,9 @@ public class Controller {
     public void handleKeyPress(KeyEvent event) {
 
         KeyCode keyCode = event.getCode();
-        System.out.println("Current index is: " + currentIndex);
 
         Text textNode = (Text) textFlow.getChildren().get(currentIndex);
         String character = textNode.getText();
-        System.out.println("Current letter in the textFlow is: " + character);
         Text textNodeOfNextCharacter = (Text) textFlow.getChildren().get(currentIndex + 1);
         String nextCharacter = textNodeOfNextCharacter.getText();
 
@@ -129,7 +130,7 @@ public class Controller {
             }
         }
 
-        if (keyCode == KeyCode.BACK_SPACE && currentIndex > 1) {
+        if (keyCode == KeyCode.BACK_SPACE && currentIndex >= 1) {
             if (character.equals(" ")) {
                 currentIndex--;
                 return;
@@ -145,6 +146,7 @@ public class Controller {
         } else if (keyCode.isLetterKey()) {
             currentIndex++;
         } else {
+            textNode.setFill(Color.GRAY);
             return;
         }
 
@@ -161,8 +163,11 @@ public class Controller {
 
         vBox.getChildren().clear();
         vBox.getChildren().add(textFlow);
-        if (countTypedWords()>0)
-        wordsPerMinuteCurrent = countTypedWords()*60/;
+        if (countTypedWords()>0) {
+            wordsPerMinuteCurrent = new DecimalFormat("#.00").format(countTypedWords()  * 60 / ((System.currentTimeMillis() - this.appStart)/1000));
+        }else{
+            wordsPerMinuteCurrent = "0";
+        }
         wordCountText.setText("Words typed: " + wordsPerMinuteCurrent);
         hBox.getChildren().set((hBox.getChildren().size() - 1), wordCountText);
     }
@@ -179,9 +184,7 @@ public int countTypedWords() {
 
             if (!character.equals(" ")) {
                 if (textNode.getFill() != Color.ORANGE && textNode.getFill() != Color.GRAY) {
-                    lettersCount++;
-                    System.out.println("Letter - lettersCount is now " + lettersCount + "with wordLengthIndex = " + wordLengthIndex);
-                }
+                    lettersCount++;}
             } else {
                 if (wordLengthIndex < listOfLettersOfWords.size()) {
                     int wordLength = listOfLettersOfWords.get(wordLengthIndex);
@@ -194,7 +197,7 @@ public int countTypedWords() {
             }
         }
     }
-
+    System.out.println("current wordCount is + " + wordCount);
     return wordCount;
 }
 

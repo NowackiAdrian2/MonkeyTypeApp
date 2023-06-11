@@ -97,7 +97,7 @@ public class MonkeytypeApp extends Application {
         topHBox.setAlignment(Pos.CENTER);
 
         // Create an instance of the Controller class
-        Controller controller = new Controller(languageChoiceBox, textAreaContainer,topHBox,elpasedTime);
+        Controller controller = new Controller(languageChoiceBox, textAreaContainer,topHBox);
         // Add a listener to the languageChoiceBox to trigger the text display
         languageChoiceBox.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> controller.displaySelectedTextFromFile());
@@ -165,7 +165,6 @@ public class MonkeytypeApp extends Application {
         KeyFrame keyFrame = new KeyFrame(Duration.seconds(1), event -> {
             remainingSeconds[0]--;
             countdownLabel.setText(Integer.toString(remainingSeconds[0]));
-            this.elpasedTime = seconds - remainingSeconds[0];
             if (remainingSeconds[0] <= 0) {
                 timeline.stop();
                 // Countdown finished,TU TRZEBA WYSWIETLC WYKRES
