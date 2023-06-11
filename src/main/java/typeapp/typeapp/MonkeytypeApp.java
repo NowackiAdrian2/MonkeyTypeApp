@@ -1,7 +1,6 @@
 package typeapp.typeapp;
 
 import javafx.animation.FadeTransition;
-import javafx.animation.KeyFrame;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.application.Application;
@@ -13,7 +12,6 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
-import javafx.scene.text.Font;
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -22,13 +20,20 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class MonkeytypeApp extends Application {
-    private int elpasedTime;
 
     public static void main(String[] args) {
         launch(args);
     }
 
-    Label countdownLabel;
+    public static boolean countdownRunning = false;
+    static Label countdownLabel;
+    public static boolean editingEnabled = false;
+    public static Timeline countdownTimeline; // Declare timeline as an instance variable
+    WordPerMinuteOperations wordPerMinuteOperations;
+    Timer timerforGettingDaraForWPMGraph = new Timer();
+    Timer timerForWordPerMinute = new Timer();
+
+
 
     @Override
     public void start(Stage primaryStage) {
@@ -59,11 +64,6 @@ public class MonkeytypeApp extends Application {
         PauseTransition initialDelay = new PauseTransition(Duration.seconds(5));
         initialDelay.setOnFinished(event -> blinkTransition.play());
         initialDelay.play();
-
-        startButton.setOnAction(event -> {
-            int selectedTime = timeChoiceBox.getValue();
-            startCountdown(selectedTime);
-        });
 
 
         // Choice box for language
@@ -97,7 +97,7 @@ public class MonkeytypeApp extends Application {
         topHBox.setAlignment(Pos.CENTER);
 
         // Create an instance of the Controller class
-        Controller controller = new Controller(languageChoiceBox, textAreaContainer,topHBox);
+        Controller controller = new Controller(timeChoiceBox, languageChoiceBox, textAreaContainer, topHBox, this);
         // Add a listener to the languageChoiceBox to trigger the text display
         languageChoiceBox.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> controller.displaySelectedTextFromFile());
@@ -106,11 +106,42 @@ public class MonkeytypeApp extends Application {
         ScrollPane timeScrollPane = new ScrollPane();
         ScrollPane languageScrollPane = new ScrollPane();
 
+
         // Set scroll panes properties
         timeScrollPane.setPrefViewportWidth(150);
         timeScrollPane.setPrefViewportHeight(150);
         languageScrollPane.setPrefViewportWidth(150);
         languageScrollPane.setPrefViewportHeight(150);
+
+        startButton.setOnAction(event -> {
+            // Enable the shortcut when the Start button is pressed
+            controller.setShortcutEnabled(true);
+            if (!countdownRunning) { // Check if countdown is not already running
+                countdownRunning = true; // Set the flag to true to indicate countdown is running
+                int selectedTime = timeChoiceBox.getValue();
+                this.wordPerMinuteOperations = new WordPerMinuteOperations(controller.getListOfLetterOfWords(), controller.getAppStart(), topHBox, controller.getwordCountText(), controller.getSelectedTime(), controller.getTextFlow());
+                controller.startCountdown(selectedTime);
+
+                timerForWordPerMinute.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        Platform.runLater(() -> {
+                            wordPerMinuteOperations.countWordPerMinute();
+                            wordPerMinuteOperations.countWordPerMinuteAverage();
+                        });
+                    }
+                }, 0, 1000);
+
+                timerforGettingDaraForWPMGraph.schedule(new TimerTask() {
+                    @Override
+                    public void run() {
+                        Platform.runLater(() -> {
+                            wordPerMinuteOperations.getDataforWPMGraph();
+                        });
+                    }
+                }, 0, 5000);
+            }
+        });
 
         // Create the footer
         Label footerLabel = new Label("Keyboard Shortcuts:");
@@ -140,41 +171,22 @@ public class MonkeytypeApp extends Application {
         // Create the scene
         Scene scene = new Scene(borderPane, 700, 500);
         scene.setOnKeyPressed(controller::handleKeyPress);
+        textAreaContainer.setOnKeyPressed(controller::handleShortcut);
         Rectangle overlay = new Rectangle(scene.getWidth(), scene.getHeight(), Color.rgb(0, 0, 0, 0.5));
-//        scene.setOnKeyPressed(controller::shortCutsHandler);
 
         // Set the scene
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        Timer timer = new Timer();
-        timer.schedule(new TimerTask() {
+        Timer timerForTextJumping = new Timer();
+        timerForTextJumping.schedule(new TimerTask() {
             @Override
             public void run() {
                 controller.jumpText();
             }
         }, 0, 50000);
-    }
-
-    private void startCountdown(int seconds) {
-        final int[] remainingSeconds = {seconds};
-        countdownLabel.setText(Integer.toString(remainingSeconds[0]));
-
-        Timeline timeline = new Timeline();
-        timeline.setCycleCount(Timeline.INDEFINITE);
-        KeyFrame keyFrame = new KeyFrame(Duration.seconds(1), event -> {
-            remainingSeconds[0]--;
-            countdownLabel.setText(Integer.toString(remainingSeconds[0]));
-            if (remainingSeconds[0] <= 0) {
-                timeline.stop();
-                // Countdown finished,TU TRZEBA WYSWIETLC WYKRES
-            }
-        });
-        timeline.getKeyFrames().add(keyFrame);
-        timeline.play();
 
     }
-
     private Label createButtonLabel(String labelText) {
         Label label = new Label(labelText);
         label.setPadding(new Insets(5));

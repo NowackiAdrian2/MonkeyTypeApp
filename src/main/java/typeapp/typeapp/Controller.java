@@ -2,8 +2,7 @@ package typeapp.typeapp;
 
 
 import javafx.animation.*;
-import javafx.collections.ObservableList;
-import javafx.event.Event;
+import javafx.application.Platform;
 import javafx.scene.Node;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextField;
@@ -12,7 +11,6 @@ import javafx.scene.input.KeyEvent;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Font;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -21,35 +19,37 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.URL;
-import java.text.DecimalFormat;
 import java.util.*;
 
-import static javafx.scene.input.KeyCode.getKeyCode;
 
 public class Controller {
 
     private static final double DELAY  = 0.001;
     private final double appStart;
+    public Text getwordCountText;
+    private WordPerMinuteOperations WordPerMinuteOperations;
     private  HBox hBox;
     private  VBox vBox;
     private ChoiceBox<String> languageChoiceBox;
     private Random random;
-    private TextFlow textFlow;
+    private static TextFlow textFlow;
     int currentIndex;
     private TextField textField;
     private Text caret = new Text("|");
     private static final double JUMP_HEIGHT = 10;
     private static final Duration JUMP_DURATION = Duration.millis(100);
     private String wordsPerMinuteCurrent;
+    private int selectedTime;
 
     Text wordCountText = new Text();
     List<String> randomWords;
     private List<Integer> listOfLettersOfWords;
+    private boolean shortcutEnabled = false;
 
+    ChoiceBox<Integer> timeChoiceBox;
 
-
-    public Controller(ChoiceBox<String> languageChoiceBox, VBox vBox, HBox hBox) {
+    public Controller(ChoiceBox<Integer> timeChoiceBox, ChoiceBox<String> languageChoiceBox, VBox vBox, HBox hBox, MonkeytypeApp monkeytypeApp) {
+        this.timeChoiceBox = timeChoiceBox;
         this.languageChoiceBox = languageChoiceBox;
         this.textFlow = new TextFlow();
         this.random = new Random();
@@ -58,7 +58,13 @@ public class Controller {
         this.textField = new TextField();
         this.listOfLettersOfWords = new ArrayList<>();
         this.appStart = System.currentTimeMillis();
+    }
 
+    public void setShortcutEnabled(boolean shortcutEnabled) {
+        this.shortcutEnabled = shortcutEnabled;
+    }
+    public boolean isShortcutEnabled() {
+        return shortcutEnabled;
     }
 
 
@@ -97,7 +103,7 @@ public class Controller {
 
 
             vBox.getChildren().add(textFlow);
-            wordCountText.setText("Words typed: " + wordsPerMinuteCurrent);
+            wordCountText.setText("Current WPM: " + 0);
             hBox.getChildren().add(hBox.getChildren().size(), wordCountText);
 
         } catch (IOException e) {
@@ -106,6 +112,12 @@ public class Controller {
 
 
     public void handleKeyPress(KeyEvent event) {
+
+        if (!MonkeytypeApp.editingEnabled) {
+            return; // Don't process key events if editing is not enabled
+        } else {
+            hBox.requestFocus();
+        }
 
         KeyCode keyCode = event.getCode();
 
@@ -117,7 +129,7 @@ public class Controller {
         String inputCharToString = event.getText();
 
         if (character.equals(" ")) {
-            if (keyCode.equals(KeyCode.ENTER)) {
+            if (keyCode.equals(KeyCode.SPACE)) {
                 currentIndex++;
                 return;
             } else if (keyCode.isLetterKey()) {
@@ -125,9 +137,15 @@ public class Controller {
                 redundantLetter.setFill(Color.ORANGE);
                 redundantLetter.setFont(Font.font(20));
                 textFlow.getChildren().add(currentIndex, redundantLetter);
-                currentIndex++; // Aktualizacja currentIndex
+                currentIndex++;
                 return;
             }
+        }
+        // Check if it's the last letter of the last word
+        if (isLastLetterOfLastWord()) {
+            displaySelectedTextFromFile();
+            currentIndex = 0; // Reset the currentIndex
+            return;
         }
 
         if (keyCode == KeyCode.BACK_SPACE && currentIndex >= 1) {
@@ -163,43 +181,81 @@ public class Controller {
 
         vBox.getChildren().clear();
         vBox.getChildren().add(textFlow);
-        if (countTypedWords()>0) {
-            wordsPerMinuteCurrent = new DecimalFormat("#.00").format(countTypedWords()  * 60 / ((System.currentTimeMillis() - this.appStart)/1000));
-        }else{
-            wordsPerMinuteCurrent = "0";
-        }
-        wordCountText.setText("Words typed: " + wordsPerMinuteCurrent);
-        hBox.getChildren().set((hBox.getChildren().size() - 1), wordCountText);
+
     }
 
-public int countTypedWords() {
-    int wordCount = 0;
-    int wordLengthIndex = 0;
-    int lettersCount = 0;
+    public void handleShortcut(KeyEvent event) {
+        if (!shortcutEnabled || !MonkeytypeApp.editingEnabled) {
+            return; // Shortcut is not enabled or editing is not enabled
+        }
 
-    for (Node node : textFlow.getChildren()) {
-        if (node instanceof Text) {
-            Text textNode = (Text) node;
-            String character = textNode.getText();
+        if (event.getCode() == KeyCode.TAB && event.isShiftDown()) {
+            // TAB + Shift was pressed, restart the countdown and clear text changes
+            // tab + shift bo enter zajety przez przerwe miedzy slowami
+            displaySelectedTextFromFile();
+            currentIndex = 0; // Reset the currentIndex
 
-            if (!character.equals(" ")) {
-                if (textNode.getFill() != Color.ORANGE && textNode.getFill() != Color.GRAY) {
-                    lettersCount++;}
-            } else {
-                if (wordLengthIndex < listOfLettersOfWords.size()) {
-                    int wordLength = listOfLettersOfWords.get(wordLengthIndex);
-                    if (lettersCount == wordLength) {
-                        wordCount++;
-                    }
-                    wordLengthIndex++;
-                    lettersCount = 0;
-                }
+            // Restart the countdown
+            this.selectedTime = timeChoiceBox.getValue();
+            startCountdown(selectedTime);
+        } else if (event.getCode().equals(KeyCode.P) && event.isControlDown() && event.isShiftDown()) {
+
+            // ten shortcut nie dziala (ctrl+shift+p)
+
+            MonkeytypeApp.countdownTimeline.pause();
+            disableTextFlowEditing();
+            shortcutEnabled = false;
+        } else if (event.getCode() == KeyCode.ESCAPE) {
+            // Close the application
+            // tez nie dziala
+            Platform.exit();
+            System.exit(0);
+        }
+    }
+    public static void disableTextFlowEditing() {
+        for (Node node : textFlow.getChildren()) {
+            node.setMouseTransparent(true); // Disable mouse interaction with nodes
+            node.setFocusTraversable(false); // Disable keyboard focus on nodes
+        }
+    }
+
+    private boolean isLastLetterOfLastWord() {
+        return currentIndex >= textFlow.getChildren().size() - 2;
+    }
+
+
+    public static void startCountdown(int seconds) {
+        final int[] remainingSeconds = {seconds};
+        MonkeytypeApp.countdownLabel.setText(Integer.toString(remainingSeconds[0]));
+
+        if (MonkeytypeApp.countdownTimeline != null && MonkeytypeApp.countdownTimeline.getStatus() == Animation.Status.RUNNING) {
+            MonkeytypeApp.countdownTimeline.stop(); // Stop the previous timeline if it's running
+        }
+
+        MonkeytypeApp.countdownTimeline = new Timeline();
+        MonkeytypeApp.countdownTimeline.setCycleCount(Timeline.INDEFINITE);
+        KeyFrame keyFrame = new KeyFrame(Duration.seconds(1), event -> {
+            remainingSeconds[0]--;
+            MonkeytypeApp.countdownLabel.setText(Integer.toString(remainingSeconds[0]));
+            //end of the game ?
+            if (remainingSeconds[0] <= 0) {
+                MonkeytypeApp.countdownTimeline.stop();
+                MonkeytypeApp.countdownRunning = false; // Reset the flag to indicate countdown has finished
+                MonkeytypeApp.editingEnabled = false;
             }
-        }
+        });
+        MonkeytypeApp.countdownTimeline.getKeyFrames().add(keyFrame);
+        MonkeytypeApp.countdownTimeline.play();
+
+        MonkeytypeApp.countdownTimeline.setOnFinished(event -> {
+            MonkeytypeApp.countdownRunning = false; // Reset the flag to indicate countdown has finished
+            MonkeytypeApp.editingEnabled = false;
+            disableTextFlowEditing();
+        });
+
+        MonkeytypeApp.countdownTimeline.play();
+        MonkeytypeApp.editingEnabled = true; // Enable editing when the countdown starts
     }
-    System.out.println("current wordCount is + " + wordCount);
-    return wordCount;
-}
 
     void jumpText() {
         SequentialTransition sequentialTransition = new SequentialTransition();
@@ -208,7 +264,6 @@ public int countTypedWords() {
             Text text = (Text) this.textFlow.getChildren().get(i);
             animateJump(text, i, sequentialTransition);
         }
-
         sequentialTransition.play();
     }
 
@@ -234,22 +289,29 @@ public int countTypedWords() {
     }
 
 
-    public void shortCutsHandler(KeyEvent event,Rectangle overlay) {
-        KeyCode keyCode = event.getCode();
-        if (keyCode == KeyCode.TAB && keyCode == KeyCode.ENTER) {
-//            restartTest();
-            }
-         if (keyCode == KeyCode.CONTROL && keyCode == KeyCode.SHIFT && keyCode == KeyCode.P) {
-                // Show PAUSE window
-             overlay.setVisible(true);
-             System.out.println("Pausing application");
-//            showPauseWindow();
-            }
-         if (keyCode == KeyCode.ESCAPE) {
-            // Exit the app
-             System.out.println("Exiting application");
-             System.exit(0);
-//            exitApp();
-        }
+    public void setSelectedTime(int selectedTime) {
+        this.selectedTime = selectedTime;
     }
+
+    public double getAppStart() {
+        return appStart;
+    }
+
+    public Text getwordCountText() {
+        return wordCountText;
+    }
+
+    public int getSelectedTime() {
+        return selectedTime;
+    }
+
+    public TextFlow getTextFlow() {
+        return textFlow;
+    }
+
+    public List<Integer> getListOfLetterOfWords() {
+        return  listOfLettersOfWords;
+    }
+
+
 }

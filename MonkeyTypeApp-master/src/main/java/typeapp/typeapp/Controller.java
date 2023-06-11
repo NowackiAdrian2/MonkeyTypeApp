@@ -194,10 +194,11 @@ public class Controller {
 
             vBox.getChildren().clear();
             vBox.getChildren().add(textFlow);
-            totalWordsTyped = countTypedWords();
-            wordCountText.setText("Words typed: " + totalWordsTyped);
+
+            wordCountText.setText("Words typed: " + wordsPerMinuteCurrent);
             hBox.getChildren().set((hBox.getChildren().size() - 1), wordCountText);
         }
+
 
     public void handleShortcut(KeyEvent event) {
         if (!shortcutEnabled || !MonkeytypeApp.editingEnabled) {
@@ -239,36 +240,7 @@ public class Controller {
         return currentIndex >= textFlow.getChildren().size() - 2;
     }
 
-public int countTypedWords() {
-    int wordCount = 0;
-    int wordLengthIndex = 0;
-    int lettersCount = 0;
 
-    for (Node node : textFlow.getChildren()) {
-        if (node instanceof Text) {
-            Text textNode = (Text) node;
-            String character = textNode.getText();
-
-            if (!character.equals(" ")) {
-                if (textNode.getFill() != Color.ORANGE && textNode.getFill() != Color.GRAY) {
-                    lettersCount++;
-                    System.out.println("Letter - lettersCount is now " + lettersCount + "with wordLengthIndex = " + wordLengthIndex);
-                }
-            } else {
-                if (wordLengthIndex < listOfLettersOfWords.size()) {
-                    int wordLength = listOfLettersOfWords.get(wordLengthIndex);
-                    if (lettersCount == wordLength) {
-                        wordCount++;
-                    }
-                    wordLengthIndex++;
-                    lettersCount = 0;
-                }
-            }
-        }
-    }
-
-    return wordCount;
-}
 
     public static void startCountdown(int seconds) {
         final int[] remainingSeconds = {seconds};
