@@ -5,6 +5,7 @@ import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.XYChart;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextFlow;
@@ -21,7 +22,7 @@ public class WordPerMinuteOperations{
     private List<Integer> listOfLettersOfWords;
     private double wordsPerMinuteCurrent;
     private double wordsPerMinuteAverage;
-    XYChart.Series<Number, Number> series;
+    private XYChart.Series<Number, Number> series;
     int elapsedTime = 0;
 
     WordPerMinuteOperations(List<Integer> listOfLettersOfWords, double appStart, HBox hBox, Text wordCountText, int selectedTime, TextFlow textFlow){
@@ -32,17 +33,20 @@ public class WordPerMinuteOperations{
         this.textFlow = textFlow;
         this.series = new XYChart.Series<>();
         this.listOfLettersOfWords = listOfLettersOfWords;
-
     }
 
-     void getDataforWPMGraph() {
+    void getDataforWPMGraph() {
                     series.getData().add(new XYChart.Data<>(elapsedTime,Double.valueOf(wordsPerMinuteCurrent)));
                     this.elapsedTime+=5;
     }
-     void drawWMPGraph() {
+    protected LineChart drawWMPGraph() {
         // Oś X (czas)
         final NumberAxis xAxis = new NumberAxis();
         xAxis.setLabel("Time");
+        xAxis.setAutoRanging(true);
+        xAxis.setTickUnit(5);
+        xAxis.setUpperBound(selectedTime);
+
 
         // Oś Y (słowa na minutę)
         final NumberAxis yAxis = new NumberAxis();
@@ -55,6 +59,7 @@ public class WordPerMinuteOperations{
         // Dodanie serii danych do wykresu
         lineChart.getData().add(series);
 
+        return lineChart;
     }
 
     void countWordPerMinuteAverage(){

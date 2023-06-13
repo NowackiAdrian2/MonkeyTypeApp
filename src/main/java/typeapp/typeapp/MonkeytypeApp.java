@@ -4,14 +4,13 @@ import javafx.animation.FadeTransition;
 import javafx.animation.PauseTransition;
 import javafx.animation.Timeline;
 import javafx.application.Application;
-import javafx.application.Platform;
 import javafx.geometry.Insets;
 import javafx.geometry.Pos;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
-import javafx.scene.shape.Rectangle;
+
 import javafx.stage.Stage;
 import javafx.util.Duration;
 
@@ -25,14 +24,10 @@ public class MonkeytypeApp extends Application {
         launch(args);
     }
 
-    public static boolean countdownRunning = false;
-    static Label countdownLabel;
-    public static boolean editingEnabled = false;
-    public static Timeline countdownTimeline; // Declare timeline as an instance variable
-    WordPerMinuteOperations wordPerMinuteOperations;
-    Timer timerforGettingDaraForWPMGraph = new Timer();
-    Timer timerForWordPerMinute = new Timer();
-
+    public boolean countdownRunning = false;
+    public Label countdownLabel;
+    public boolean editingEnabled = false;
+    public Timeline countdownTimeline; // Declare timeline as an instance variable
 
 
     @Override
@@ -90,14 +85,14 @@ public class MonkeytypeApp extends Application {
         ScrollPane scrollPaneVBOX = new ScrollPane(textAreaContainer);
         scrollPaneVBOX.setFitToWidth(true);
         scrollPaneVBOX.setFitToHeight(true);
-        countdownLabel = new Label();
+        this.countdownLabel = new Label();
 
         // Create the top area with choice boxes and countdown label
-        HBox topHBox = new HBox(10, languageChoiceBox, timeChoiceBox, countdownLabel, startButton);
+        HBox topHBox = new HBox(10, languageChoiceBox, timeChoiceBox, this.countdownLabel, startButton);
         topHBox.setAlignment(Pos.CENTER);
 
         // Create an instance of the Controller class
-        Controller controller = new Controller(timeChoiceBox, languageChoiceBox, textAreaContainer, topHBox, this);
+        Controller controller = new Controller(timeChoiceBox, languageChoiceBox, textAreaContainer, topHBox, this.editingEnabled,this.countdownLabel,this.countdownTimeline);
         // Add a listener to the languageChoiceBox to trigger the text display
         languageChoiceBox.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> controller.displaySelectedTextFromFile());
@@ -119,27 +114,7 @@ public class MonkeytypeApp extends Application {
             if (!countdownRunning) { // Check if countdown is not already running
                 countdownRunning = true; // Set the flag to true to indicate countdown is running
                 int selectedTime = timeChoiceBox.getValue();
-                this.wordPerMinuteOperations = new WordPerMinuteOperations(controller.getListOfLetterOfWords(), controller.getAppStart(), topHBox, controller.getwordCountText(), controller.getSelectedTime(), controller.getTextFlow());
                 controller.startCountdown(selectedTime);
-
-                timerForWordPerMinute.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        Platform.runLater(() -> {
-                            wordPerMinuteOperations.countWordPerMinute();
-                            wordPerMinuteOperations.countWordPerMinuteAverage();
-                        });
-                    }
-                }, 0, 1000);
-
-                timerforGettingDaraForWPMGraph.schedule(new TimerTask() {
-                    @Override
-                    public void run() {
-                        Platform.runLater(() -> {
-                            wordPerMinuteOperations.getDataforWPMGraph();
-                        });
-                    }
-                }, 0, 5000);
             }
         });
 
@@ -167,24 +142,21 @@ public class MonkeytypeApp extends Application {
         borderPane.setTop(topHBox);
         borderPane.setCenter(scrollPaneVBOX);
         borderPane.setBottom(footerVBox);
+        controller.addBorderPane(borderPane);
 
         // Create the scene
         Scene scene = new Scene(borderPane, 700, 500);
         scene.setOnKeyPressed(controller::handleKeyPress);
         textAreaContainer.setOnKeyPressed(controller::handleShortcut);
-        Rectangle overlay = new Rectangle(scene.getWidth(), scene.getHeight(), Color.rgb(0, 0, 0, 0.5));
+
+
+
 
         // Set the scene
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        Timer timerForTextJumping = new Timer();
-        timerForTextJumping.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                controller.jumpText();
-            }
-        }, 0, 50000);
+
 
     }
     private Label createButtonLabel(String labelText) {

@@ -3,12 +3,18 @@ package typeapp.typeapp;
 
 import javafx.animation.*;
 import javafx.application.Platform;
+import javafx.geometry.Pos;
 import javafx.scene.Node;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.ChoiceBox;
+import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
+import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -26,8 +32,7 @@ public class Controller {
 
     private static final double DELAY  = 0.001;
     private final double appStart;
-    public Text getwordCountText;
-    private WordPerMinuteOperations WordPerMinuteOperations;
+    private  Scene scene;
     private  HBox hBox;
     private  VBox vBox;
     private ChoiceBox<String> languageChoiceBox;
@@ -36,19 +41,25 @@ public class Controller {
     int currentIndex;
     private TextField textField;
     private Text caret = new Text("|");
-    private static final double JUMP_HEIGHT = 10;
-    private static final Duration JUMP_DURATION = Duration.millis(100);
-    private String wordsPerMinuteCurrent;
+    private final double JUMP_HEIGHT = 10;
+    private  final Duration JUMP_DURATION = Duration.millis(100);
     private int selectedTime;
-
+    WordPerMinuteOperations wordPerMinuteOperations;
+    Timer timerforGettingDaraForWPMGraph = new Timer();
+    Timer timerForWordPerMinute = new Timer();
     Text wordCountText = new Text();
     List<String> randomWords;
     private List<Integer> listOfLettersOfWords;
     private boolean shortcutEnabled = false;
-
     ChoiceBox<Integer> timeChoiceBox;
+    private boolean editingEnabled;
+    private Label countdownLabel;
+    private Timeline countdownTimeline;
+    private boolean countdownRunning;
+    private BorderPane borderPane;
+    Timer timerForTextJumping = new Timer();
 
-    public Controller(ChoiceBox<Integer> timeChoiceBox, ChoiceBox<String> languageChoiceBox, VBox vBox, HBox hBox, MonkeytypeApp monkeytypeApp) {
+    public Controller(ChoiceBox<Integer> timeChoiceBox, ChoiceBox<String> languageChoiceBox, VBox vBox, HBox hBox,boolean editingEnabled, Label countdown, Timeline countdownTimeline) {
         this.timeChoiceBox = timeChoiceBox;
         this.languageChoiceBox = languageChoiceBox;
         this.textFlow = new TextFlow();
@@ -58,6 +69,9 @@ public class Controller {
         this.textField = new TextField();
         this.listOfLettersOfWords = new ArrayList<>();
         this.appStart = System.currentTimeMillis();
+        this.countdownLabel = countdown;
+        this.editingEnabled = editingEnabled;
+        this.countdownTimeline = countdownTimeline;
     }
 
     public void setShortcutEnabled(boolean shortcutEnabled) {
@@ -113,7 +127,7 @@ public class Controller {
 
     public void handleKeyPress(KeyEvent event) {
 
-        if (!MonkeytypeApp.editingEnabled) {
+        if (!this.editingEnabled) {
             return; // Don't process key events if editing is not enabled
         } else {
             hBox.requestFocus();
@@ -185,7 +199,7 @@ public class Controller {
     }
 
     public void handleShortcut(KeyEvent event) {
-        if (!shortcutEnabled || !MonkeytypeApp.editingEnabled) {
+        if (!shortcutEnabled || this.editingEnabled) {
             return; // Shortcut is not enabled or editing is not enabled
         }
 
@@ -202,7 +216,7 @@ public class Controller {
 
             // ten shortcut nie dziala (ctrl+shift+p)
 
-            MonkeytypeApp.countdownTimeline.pause();
+           countdownTimeline.pause();
             disableTextFlowEditing();
             shortcutEnabled = false;
         } else if (event.getCode() == KeyCode.ESCAPE) {
@@ -219,43 +233,92 @@ public class Controller {
         }
     }
 
+    public void setBorderPane(BorderPane borderPane){
+        this.borderPane = borderPane;
+    }
+
     private boolean isLastLetterOfLastWord() {
         return currentIndex >= textFlow.getChildren().size() - 2;
     }
+    public void startCountdown(int seconds) {
 
+        timerForTextJumping.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                jumpText();
+            }
+        }, 0, 50000);
+        this.wordPerMinuteOperations = new WordPerMinuteOperations(getListOfLetterOfWords(), getAppStart(), hBox, getwordCountText(), getSelectedTime(), getTextFlow());
+        timerForWordPerMinute.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> {
+                    wordPerMinuteOperations.countWordPerMinute();
+                    wordPerMinuteOperations.countWordPerMinuteAverage();
+                });
+            }
+        }, 0, 1000);
 
-    public static void startCountdown(int seconds) {
+        timerforGettingDaraForWPMGraph.schedule(new TimerTask() {
+            @Override
+            public void run() {
+                Platform.runLater(() -> {
+                    wordPerMinuteOperations.getDataforWPMGraph();
+                });
+            }
+        }, 0, 5000);
+
         final int[] remainingSeconds = {seconds};
-        MonkeytypeApp.countdownLabel.setText(Integer.toString(remainingSeconds[0]));
 
-        if (MonkeytypeApp.countdownTimeline != null && MonkeytypeApp.countdownTimeline.getStatus() == Animation.Status.RUNNING) {
-            MonkeytypeApp.countdownTimeline.stop(); // Stop the previous timeline if it's running
+        countdownLabel.setText(Integer.toString(remainingSeconds[0]));
+
+        if (countdownTimeline != null && countdownTimeline.getStatus() == Animation.Status.RUNNING) {
+            countdownTimeline.stop(); // Stop the previous timeline if it's running
         }
 
-        MonkeytypeApp.countdownTimeline = new Timeline();
-        MonkeytypeApp.countdownTimeline.setCycleCount(Timeline.INDEFINITE);
+        countdownTimeline = new Timeline();
+        countdownTimeline.setCycleCount(Timeline.INDEFINITE);
         KeyFrame keyFrame = new KeyFrame(Duration.seconds(1), event -> {
             remainingSeconds[0]--;
-            MonkeytypeApp.countdownLabel.setText(Integer.toString(remainingSeconds[0]));
-            //end of the game ?
+            countdownLabel.setText(Integer.toString(remainingSeconds[0]));
+            // end of the game ?
             if (remainingSeconds[0] <= 0) {
-                MonkeytypeApp.countdownTimeline.stop();
-                MonkeytypeApp.countdownRunning = false; // Reset the flag to indicate countdown has finished
-                MonkeytypeApp.editingEnabled = false;
+                countdownTimeline.stop();
+                countdownRunning = false; // Reset the flag to indicate countdown has finished
+                editingEnabled = false;
+
+                HBox hBoxWithGraph =  new HBox(wordPerMinuteOperations.drawWMPGraph());
+                timerforGettingDaraForWPMGraph.cancel();
+                System.out.println("timerforGettingDaraForWPMGraph cancelled");
+                timerForWordPerMinute.cancel();
+                System.out.println("timerForWordPerMinute cancelled");
+                timerForTextJumping.cancel();
+                System.out.println("timerForTextJumping cancelled");
+                Platform.runLater(() -> {
+                    borderPane.getChildren().clear();
+                    hBoxWithGraph.setAlignment(Pos.CENTER);
+                    borderPane.setCenter(hBoxWithGraph);
+                });
             }
         });
-        MonkeytypeApp.countdownTimeline.getKeyFrames().add(keyFrame);
-        MonkeytypeApp.countdownTimeline.play();
-
-        MonkeytypeApp.countdownTimeline.setOnFinished(event -> {
-            MonkeytypeApp.countdownRunning = false; // Reset the flag to indicate countdown has finished
-            MonkeytypeApp.editingEnabled = false;
+        countdownTimeline.getKeyFrames().add(keyFrame);
+        countdownTimeline.play();
+        countdownTimeline.setOnFinished(event -> {
+            countdownRunning = false; // Reset the flag to indicate countdown has finished
+            editingEnabled = false;
             disableTextFlowEditing();
+
         });
 
-        MonkeytypeApp.countdownTimeline.play();
-        MonkeytypeApp.editingEnabled = true; // Enable editing when the countdown starts
+
+        countdownTimeline.play();
+        editingEnabled = true; // Enable editing when the countdown starts
     }
+
+      void setScene(Scene scene){
+        this.scene = scene;
+      }
+
 
     void jumpText() {
         SequentialTransition sequentialTransition = new SequentialTransition();
@@ -266,6 +329,7 @@ public class Controller {
         }
         sequentialTransition.play();
     }
+
 
     private void animateJump(Text text, int index, SequentialTransition sequentialTransition) {
         TranslateTransition jumpTransition = new TranslateTransition(JUMP_DURATION, text);
@@ -314,4 +378,7 @@ public class Controller {
     }
 
 
+    public void addBorderPane(BorderPane borderPane) {
+        this.borderPane = borderPane;
+    }
 }
