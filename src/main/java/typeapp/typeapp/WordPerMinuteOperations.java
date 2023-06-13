@@ -43,9 +43,8 @@ public class WordPerMinuteOperations{
         // Oś X (czas)
         final NumberAxis xAxis = new NumberAxis();
         xAxis.setLabel("Time");
-        xAxis.setAutoRanging(true);
-        xAxis.setTickUnit(5);
-        xAxis.setUpperBound(selectedTime);
+        xAxis.setAutoRanging(false);
+
 
 
         // Oś Y (słowa na minutę)
@@ -86,6 +85,7 @@ public class WordPerMinuteOperations{
                         int wordLength = listOfLettersOfWords.get(wordLengthIndex);
                         if (lettersCount == wordLength) {
                             wordCount++;
+                            //czas
                         }
                         wordLengthIndex++;
                         lettersCount = 0;

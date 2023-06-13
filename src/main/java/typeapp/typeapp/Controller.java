@@ -233,10 +233,6 @@ public class Controller {
         }
     }
 
-    public void setBorderPane(BorderPane borderPane){
-        this.borderPane = borderPane;
-    }
-
     private boolean isLastLetterOfLastWord() {
         return currentIndex >= textFlow.getChildren().size() - 2;
     }
@@ -255,18 +251,11 @@ public class Controller {
                 Platform.runLater(() -> {
                     wordPerMinuteOperations.countWordPerMinute();
                     wordPerMinuteOperations.countWordPerMinuteAverage();
+                    wordPerMinuteOperations.getDataforWPMGraph();
                 });
             }
         }, 0, 1000);
 
-        timerforGettingDaraForWPMGraph.schedule(new TimerTask() {
-            @Override
-            public void run() {
-                Platform.runLater(() -> {
-                    wordPerMinuteOperations.getDataforWPMGraph();
-                });
-            }
-        }, 0, 5000);
 
         final int[] remainingSeconds = {seconds};
 
@@ -288,16 +277,14 @@ public class Controller {
                 editingEnabled = false;
 
                 HBox hBoxWithGraph =  new HBox(wordPerMinuteOperations.drawWMPGraph());
-                timerforGettingDaraForWPMGraph.cancel();
-                System.out.println("timerforGettingDaraForWPMGraph cancelled");
                 timerForWordPerMinute.cancel();
-                System.out.println("timerForWordPerMinute cancelled");
                 timerForTextJumping.cancel();
-                System.out.println("timerForTextJumping cancelled");
+
                 Platform.runLater(() -> {
                     borderPane.getChildren().clear();
                     hBoxWithGraph.setAlignment(Pos.CENTER);
                     borderPane.setCenter(hBoxWithGraph);
+                    //zapisywanie jako file
                 });
             }
         });
@@ -309,16 +296,9 @@ public class Controller {
             disableTextFlowEditing();
 
         });
-
-
         countdownTimeline.play();
         editingEnabled = true; // Enable editing when the countdown starts
     }
-
-      void setScene(Scene scene){
-        this.scene = scene;
-      }
-
 
     void jumpText() {
         SequentialTransition sequentialTransition = new SequentialTransition();
@@ -352,10 +332,6 @@ public class Controller {
         sequentialTransition.getChildren().add(letterTransition);
     }
 
-
-    public void setSelectedTime(int selectedTime) {
-        this.selectedTime = selectedTime;
-    }
 
     public double getAppStart() {
         return appStart;
