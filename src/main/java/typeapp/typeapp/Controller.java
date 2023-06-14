@@ -25,6 +25,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.text.DecimalFormat;
 import java.util.*;
 
 
@@ -237,6 +238,7 @@ public class Controller {
         return currentIndex >= textFlow.getChildren().size() - 2;
     }
     public void startCountdown(int seconds) {
+        this.selectedTime = seconds;
 
         timerForTextJumping.schedule(new TimerTask() {
             @Override
@@ -244,7 +246,7 @@ public class Controller {
                 jumpText();
             }
         }, 0, 50000);
-        this.wordPerMinuteOperations = new WordPerMinuteOperations(getListOfLetterOfWords(), getAppStart(), hBox, getwordCountText(), getSelectedTime(), getTextFlow());
+        this.wordPerMinuteOperations = new WordPerMinuteOperations(getListOfLetterOfWords(), getAppStart(), this.hBox, getwordCountText(),this.selectedTime,  getTextFlow());
         timerForWordPerMinute.schedule(new TimerTask() {
             @Override
             public void run() {
@@ -275,17 +277,29 @@ public class Controller {
                 countdownTimeline.stop();
                 countdownRunning = false; // Reset the flag to indicate countdown has finished
                 editingEnabled = false;
-
-                HBox hBoxWithGraph =  new HBox(wordPerMinuteOperations.drawWMPGraph());
-                timerForWordPerMinute.cancel();
                 timerForTextJumping.cancel();
+                timerForWordPerMinute.cancel();
 
-                Platform.runLater(() -> {
-                    borderPane.getChildren().clear();
-                    hBoxWithGraph.setAlignment(Pos.CENTER);
-                    borderPane.setCenter(hBoxWithGraph);
-                    //zapisywanie jako file
-                });
+                Label averageWPMLabel = new Label("  Average WPM");
+                averageWPMLabel.setStyle("-fx-font-weight: bold;");
+                DecimalFormat decimalFormat = new DecimalFormat("#.##");
+                String formattedWPM = decimalFormat.format(wordPerMinuteOperations.getWordsPerMinuteAverage());
+                Label averageWPMValueLabel = new Label(formattedWPM);
+                Label accuracyLabel = new Label("Accuracy");
+                accuracyLabel.setStyle("-fx-font-weight: bold;");
+                Label accuracyValueLabel = new Label(Double.toString(99));
+
+                VBox newLeftVBox = new VBox(10);
+                newLeftVBox.getChildren().addAll(averageWPMLabel, averageWPMValueLabel, accuracyLabel, accuracyValueLabel);
+
+                borderPane.getChildren().clear();
+                borderPane.setCenter( wordPerMinuteOperations.drawWMPGraph());
+                newLeftVBox.setAlignment(Pos.CENTER);
+                borderPane.setLeft(newLeftVBox);
+                borderPane.setBottom(null);
+
+
+
             }
         });
         countdownTimeline.getKeyFrames().add(keyFrame);

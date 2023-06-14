@@ -36,8 +36,8 @@ public class MonkeytypeApp extends Application {
 
         // Create the choice boxes
         ChoiceBox<Integer> timeChoiceBox = new ChoiceBox<>();
-        timeChoiceBox.getItems().addAll(15, 20, 45, 60, 90, 120, 300);
-        timeChoiceBox.setValue(60);
+        timeChoiceBox.getItems().addAll(3,15, 20, 45, 60, 90, 120, 300);
+        timeChoiceBox.setValue(3);
 
         // Create the start button
         Button startButton = new Button("Start");
