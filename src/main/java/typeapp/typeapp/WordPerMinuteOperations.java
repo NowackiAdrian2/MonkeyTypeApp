@@ -1,5 +1,6 @@
 package typeapp.typeapp;
 
+import javafx.geometry.Side;
 import javafx.scene.Node;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
@@ -18,13 +19,14 @@ public class WordPerMinuteOperations extends Region {
 
     private final int selectedTime;
     private final TextFlow textFlow;
-    private double appStart;
-    private HBox hBox;
+    private final double appStart;
+    private final HBox hBox;
     Text wordCountText;
-    private List<Integer> listOfLettersOfWords;
+    private final List<Integer> listOfLettersOfWords;
     private double wordsPerMinuteCurrent;
     private double wordsPerMinuteAverage;
-    private XYChart.Series<Number, Number> series;
+    private final XYChart.Series<Number, Number> series;
+    private final XYChart.Series<Number, Number> series2;
     int elapsedTime = 0;
     Map<String, Double> word_WPM = new HashMap<>();
     private StringBuilder wordToPut = new StringBuilder();
@@ -37,12 +39,19 @@ public class WordPerMinuteOperations extends Region {
         this.selectedTime = selectedTime;
         this.textFlow = textFlow;
         this.series = new XYChart.Series<>();
+        this.series2 = new XYChart.Series<>();
         this.listOfLettersOfWords = listOfLettersOfWords;
     }
 
     void getDataforWPMGraph() {
                     series.getData().add(new XYChart.Data<>(elapsedTime,wordsPerMinuteCurrent));
+                    if (elapsedTime == 0){
+                        series2.getData().add(new XYChart.Data<>(elapsedTime,0));
+                    }else {
+                        series2.getData().add(new XYChart.Data<>(elapsedTime,(wordsPerMinuteAverage/elapsedTime)));
+                    }
                     this.elapsedTime++;
+        System.out.println("countWordPerMinuteAverage");
     }
     protected LineChart drawWMPGraph() {
         // Oś X (czas)
@@ -65,15 +74,21 @@ public class WordPerMinuteOperations extends Region {
 
         // Dodanie serii danych do wykresu
         lineChart.getData().add(series);
+        lineChart.getData().add(series2);
+        lineChart.setLegendVisible(true);
+        lineChart.setLegendSide(Side.RIGHT);
+        lineChart.getData().get(0).setName("Current WPM");
+        lineChart.getData().get(1).setName("Average WPM");
 
         return lineChart;
     }
 
     void countWordPerMinuteAverage(){
+        System.out.println("countWordPerMinuteAverage");
         wordsPerMinuteAverage +=wordsPerMinuteCurrent;
     }
-
     void countWordPerMinute() {
+        System.out.println("countWordPerMinute");
          int wordCount = 0;
          int wordLengthIndex = 0;
          int lettersCount = 0;
@@ -119,7 +134,6 @@ public class WordPerMinuteOperations extends Region {
         }
 
     double getWordsPerMinuteAverage() {
-        System.out.println("wordsPerMinuteAverage/(double)selectedTime: " + wordsPerMinuteAverage/(double)selectedTime);
         return wordsPerMinuteAverage/(double)selectedTime;
     }
 

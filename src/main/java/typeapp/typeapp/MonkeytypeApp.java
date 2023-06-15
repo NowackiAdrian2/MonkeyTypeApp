@@ -15,29 +15,32 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 import java.io.File;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.ArrayList;
 
 public class MonkeytypeApp extends Application {
-
     public static void main(String[] args) {
         launch(args);
     }
+    private int pauseControllerIndex = 0;
 
-    public boolean countdownRunning = false;
-    public Label countdownLabel;
-    public boolean editingEnabled = false;
-    public Timeline countdownTimeline; // Declare timeline as an instance variable
-
+    private boolean countdownRunning = false;
+    private Label countdownLabel;
+    private boolean editingEnabled = false;
+    private Timeline countdownTimeline; // Declare timeline as an instance variable
+    private Controller controller;
+    private HBox topHBox;
+    private KeyEventsListener keyEventsListener;
 
     @Override
     public void start(Stage primaryStage) {
+
+
         primaryStage.setTitle("typeApp");
 
         // Create the choice boxes
         ChoiceBox<Integer> timeChoiceBox = new ChoiceBox<>();
-        timeChoiceBox.getItems().addAll(3,15, 20, 45, 60, 90, 120, 300);
-        timeChoiceBox.setValue(3);
+        timeChoiceBox.getItems().addAll(5,15, 20, 45, 60, 90, 120, 300);
+        timeChoiceBox.setValue(60);
 
         // Create the start button
         Button startButton = new Button("Start");
@@ -88,11 +91,12 @@ public class MonkeytypeApp extends Application {
         this.countdownLabel = new Label();
 
         // Create the top area with choice boxes and countdown label
-        HBox topHBox = new HBox(10, languageChoiceBox, timeChoiceBox, this.countdownLabel, startButton);
-        topHBox.setAlignment(Pos.CENTER);
+        this.topHBox = new HBox(10, languageChoiceBox, timeChoiceBox, this.countdownLabel, startButton);
+        this.topHBox.setAlignment(Pos.CENTER);
 
         // Create an instance of the Controller class
-        Controller controller = new Controller(timeChoiceBox, languageChoiceBox, textAreaContainer, topHBox, this.editingEnabled,this.countdownLabel,this.countdownTimeline);
+        this.controller = new Controller(timeChoiceBox, languageChoiceBox, textAreaContainer, topHBox, this.editingEnabled,this.countdownLabel,this.countdownTimeline);
+
         // Add a listener to the languageChoiceBox to trigger the text display
         languageChoiceBox.getSelectionModel().selectedItemProperty().addListener(
                 (observable, oldValue, newValue) -> controller.displaySelectedTextFromFile());
@@ -110,7 +114,7 @@ public class MonkeytypeApp extends Application {
 
         startButton.setOnAction(event -> {
             // Enable the shortcut when the Start button is pressed
-            controller.setShortcutEnabled(true);
+            keyEventsListener.setShortcutEnabled(true);
             if (!countdownRunning) { // Check if countdown is not already running
                 countdownRunning = true; // Set the flag to true to indicate countdown is running
                 int selectedTime = timeChoiceBox.getValue();
@@ -144,13 +148,15 @@ public class MonkeytypeApp extends Application {
         borderPane.setBottom(footerVBox);
         controller.addBorderPane(borderPane);
 
+        keyEventsListener = new KeyEventsListener(controller, topHBox, textAreaContainer);
+
         // Create the scene
         Scene scene = new Scene(borderPane, 700, 500);
-        scene.setOnKeyPressed(controller::handleKeyPress);
-        textAreaContainer.setOnKeyPressed(controller::handleShortcut);
-
-
-
+//        scene.setOnKeyPressed(keyEventsListener::handleKeyPress);
+        scene.setOnKeyPressed(event -> {
+            keyEventsListener.handleKeyPress(event);
+            keyEventsListener.handleShortcut(event);
+        });
 
         // Set the scene
         primaryStage.setScene(scene);
@@ -165,4 +171,22 @@ public class MonkeytypeApp extends Application {
         label.setStyle("-fx-background-color: #e3e3e3; -fx-background-radius: 4; -fx-font-weight: bold;");
         return label;
     }
-}
+    public void exitApp() {
+        // Pobranie ścieżki do uruchomionego pliku JAR
+        String javaBin = System.getProperty("java.home") + "/bin/java";
+        String classPath = System.getProperty("java.class.path");
+        String mainClass = MonkeytypeApp.class.getCanonicalName();
+
+        try {
+            // Utworzenie nowego procesu dla aplikacji
+            ProcessBuilder builder = new ProcessBuilder(javaBin, "-cp", classPath, mainClass);
+            builder.start();
+            System.exit(0);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }}
+
+
+    }
+
+
